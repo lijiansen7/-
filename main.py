@@ -47,8 +47,8 @@ MUSIC_API = "https://api.xcvts.cn/api/music/bdyy"
 
 # QQ音乐歌单解析API（使用 api.tjit.net）
 QQ_MUSIC_API = "https://api.tjit.net/api/qqmusic/"
-QQ_API_KEY = "Xpr6ctBR4ZRFRTcx9cnHUvWNJQ"  # 你的API Key
-
+QQ_API_KEY = "填入你的API key"  # 你的API Key
+#申请key      https://api.tjit.net/user/key
 # ============ 歌单存储目录 ============
 PLAYLISTS_DIR = os.path.join(os.path.dirname(__file__), 'playlists')
 os.makedirs(PLAYLISTS_DIR, exist_ok=True)
