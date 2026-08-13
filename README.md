@@ -1,7 +1,7 @@
 # -局域网点歌系统
 -应用场景：办公室内一个音响
 -解决痛点：每个人都有自己想听的歌单
-
+-仅Windows，需要安装VLC播放器（源码里是安装在默认文件夹，C盘或者D盘）,下载地址：https://get.videolan.org/vlc/3.0.23/win64/vlc-3.0.23-win64.exe  
 -本程序基于Python flask生成的局域网点歌系统  
 -Python版本 3.10.4  
 -启动程序 python main.py  
