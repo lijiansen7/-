@@ -1,0 +1,2983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 办公室共享点歌系统</title>
+    <style>
+        /* ========== 全局重置 & 基础 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e8e8e8;
+            min-height: 100vh;
+            padding: 30px 40px;
+        }
+
+        /* ========== 布局容器 ========== */
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ========== 顶部标题 ========== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .app-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-header .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .app-header .logo span {
+            font-size: 26px;
+        }
+
+        .app-header .header-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: #888;
+            flex-wrap: wrap;
+        }
+
+        .app-header .header-info .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .app-header .header-info .dot.online {
+            background: #4ade80;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .app-header .header-info .user-badge {
+            background: rgba(245, 87, 108, 0.15);
+            color: #f5576c;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .app-header .header-info .online-users {
+            color: #4ade80;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            padding: 3px 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            user-select: none;
+        }
+
+        .app-header .header-info .online-users:hover {
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        /* ===== 在线用户下拉列表 ===== */
+        .online-dropdown {
+            display: none;
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 14px;
+            min-width: 150px;
+            max-width: 220px;
+            max-height: 180px;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .online-dropdown.show {
+            display: block;
+            animation: fadeDown 0.2s ease-out;
+        }
+
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .online-dropdown .dropdown-title {
+            font-size: 11px;
+            color: #888;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .online-dropdown .user-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 4px;
+            font-size: 12px;
+            color: #ddd;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+
+        .online-dropdown .user-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .online-dropdown .user-item .online-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            flex-shrink: 0;
+        }
+
+        .online-dropdown .user-item .user-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .online-dropdown .user-item .is-me {
+            font-size: 9px;
+            color: #f5576c;
+            background: rgba(245, 87, 108, 0.15);
+            padding: 1px 8px;
+            border-radius: 10px;
+        }
+
+        .online-dropdown .empty-users {
+            color: #555;
+            font-size: 12px;
+            padding: 6px 0;
+            text-align: center;
+        }
+
+        .online-dropdown::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .online-dropdown::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        .app-header .header-info .logout-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #888;
+            padding: 3px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .app-header .header-info .logout-btn:hover {
+            background: rgba(245, 87, 108, 0.15);
+            color: #f5576c;
+        }
+
+        /* ========== 两栏主布局 ========== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* ========== 左侧主区域 ========== */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ========== 卡片通用 ========== */
+        .card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border-radius: 14px;
+            padding: 20px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.10);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .card-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ccc;
+            letter-spacing: 0.3px;
+        }
+
+        .card-header .badge {
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* ========== 当前播放卡片 ========== */
+        .now-playing-card {
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.10), rgba(240, 147, 251, 0.06));
+            border-color: rgba(245, 87, 108, 0.15);
+        }
+
+        .now-playing {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .now-playing .cover-placeholder {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d2d44, #1a1a2e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .now-playing .song-meta {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .now-playing .song-meta .title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .now-playing .song-meta .artist {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .now-playing .song-meta .user-tag {
+            display: inline-block;
+            margin-top: 4px;
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+            padding: 1px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .now-playing .song-meta .empty-text {
+            color: #666;
+            font-size: 15px;
+        }
+
+        /* ========== 进度条 ========== */
+        .progress-section {
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .progress-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-row .time-label {
+            font-size: 12px;
+            color: #888;
+            font-variant-numeric: tabular-nums;
+            min-width: 38px;
+            letter-spacing: 0.2px;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.10);
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: height 0.15s;
+        }
+
+        .progress-track:hover {
+            height: 6px;
+        }
+
+        .progress-track .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f093fb, #f5576c);
+            border-radius: 4px;
+            transition: width 0.15s ease;
+        }
+
+        .progress-track .progress-tooltip {
+            display: none;
+            position: absolute;
+            top: -28px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 1px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-track:hover .progress-tooltip {
+            display: block;
+        }
+
+        /* ========== 播放控制栏 ========== */
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .playback-controls .ctrl-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #ddd;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .playback-controls .ctrl-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            transform: scale(1.04);
+        }
+
+        .playback-controls .ctrl-btn:active {
+            transform: scale(0.94);
+        }
+
+        .playback-controls .btn-play {
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+        }
+
+        .playback-controls .btn-play:hover {
+            opacity: 0.85;
+            transform: scale(1.04);
+        }
+
+        .playback-controls .status-badge {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 4px;
+        }
+
+        .playback-controls .status-badge .indicator {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .playback-controls .status-badge .indicator.playing {
+            background: #4ade80;
+            animation: pulse-dot 1s ease-in-out infinite;
+        }
+
+        .playback-controls .status-badge .indicator.paused {
+            background: #fbbf24;
+        }
+
+        .playback-controls .status-badge .indicator.stopped {
+            background: #555;
+        }
+
+        .playback-controls .volume-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .playback-controls .volume-group input[type="range"] {
+            width: 70px;
+            height: 3px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .playback-controls .volume-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f5576c;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .playback-controls .volume-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .playback-controls .volume-group input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f5576c;
+            cursor: pointer;
+            border: none;
+        }
+
+        .playback-controls .volume-group .vol-icon {
+            font-size: 16px;
+            color: #888;
+        }
+
+        /* ========== 歌词区域 ========== */
+        .lyrics-container {
+            margin-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 10px;
+        }
+
+        .lyrics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .lyrics-header span {
+            font-size: 13px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .lyrics-toggle {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #888;
+            padding: 2px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .lyrics-toggle:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ddd;
+        }
+
+        .lyrics-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .lyrics-content.open {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .lyrics-content::-webkit-scrollbar {
+            width: 3px;
+        }
+        .lyrics-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .lyrics-empty {
+            color: #555;
+            font-size: 13px;
+            text-align: center;
+            padding: 16px 0;
+        }
+
+        .lyrics-line {
+            padding: 2px 8px;
+            font-size: 14px;
+            color: #888;
+            transition: color 0.15s, background 0.15s;
+            border-radius: 4px;
+            text-align: center;
+            line-height: 1.7;
+        }
+
+        .lyrics-line.active {
+            color: #f5576c;
+            font-weight: 600;
+            background: rgba(245, 87, 108, 0.08);
+        }
+
+        .lyrics-line .lyrics-time {
+            font-size: 10px;
+            color: #444;
+            margin-right: 6px;
+        }
+
+        /* ========== 搜索区域 ========== */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8e8e8;
+            font-size: 14px;
+            transition: border-color 0.2s, background 0.2s;
+            min-width: 140px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #f5576c;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .search-box input::placeholder {
+            color: #555;
+        }
+
+        .search-box button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-1px);
+            opacity: 0.90;
+        }
+
+        .search-box button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-box .btn-random {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .search-box .btn-random:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ========== 歌单导入区域 ========== */
+        .import-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .import-box select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8e8e8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            min-width: 110px;
+        }
+
+        .import-box select:focus {
+            border-color: #f5576c;
+        }
+
+        .import-box select option {
+            background: #1a1a2e;
+            color: #e8e8e8;
+        }
+
+        .import-box input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8e8e8;
+            font-size: 14px;
+            transition: border-color 0.2s, background 0.2s;
+            min-width: 200px;
+        }
+
+        .import-box input:focus {
+            outline: none;
+            border-color: #f5576c;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .import-box input::placeholder {
+            color: #555;
+        }
+
+        .import-box .btn-import {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .import-box .btn-import:hover {
+            transform: translateY(-1px);
+            opacity: 0.90;
+        }
+
+        .import-box .btn-import:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .import-status {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #888;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .import-status.success {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.08);
+        }
+
+        .import-status.error {
+            color: #f5576c;
+            background: rgba(245, 87, 108, 0.08);
+        }
+
+        .import-status.loading {
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.08);
+        }
+
+        /* ========== 候选歌曲列表 ========== */
+        .candidate-list {
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .candidate-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .candidate-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .candidate-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: background 0.15s, transform 0.15s;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .candidate-item:hover {
+            background: rgba(245, 87, 108, 0.08);
+            transform: translateX(4px);
+        }
+
+        .candidate-item .cand-index {
+            color: #444;
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 28px;
+        }
+
+        .candidate-item .cand-name {
+            font-weight: 500;
+            color: #ddd;
+            font-size: 13px;
+        }
+
+        .candidate-item .cand-artist {
+            font-size: 12px;
+            color: #777;
+            margin-left: auto;
+        }
+
+        .candidate-item .cand-add {
+            margin-left: 8px;
+            color: #4ade80;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .candidate-item:hover .cand-add {
+            opacity: 1;
+        }
+
+        .candidate-empty {
+            text-align: center;
+            color: #444;
+            padding: 20px 0;
+            font-size: 13px;
+        }
+
+        /* ========== 我的歌单 ========== */
+        .my-playlists-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .playlist-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 10px 14px;
+            min-width: 140px;
+            flex: 1;
+            max-width: 200px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(245, 87, 108, 0.3);
+        }
+
+        .playlist-item .pl-name {
+            font-weight: 500;
+            color: #ddd;
+            font-size: 13px;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .playlist-item .pl-meta {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .playlist-item .pl-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .playlist-item .pl-actions button {
+            padding: 2px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .playlist-item .pl-actions .pl-load {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .playlist-item .pl-actions .pl-load:hover {
+            background: rgba(74, 222, 128, 0.25);
+        }
+
+        .playlist-item .pl-actions .pl-delete {
+            background: rgba(245, 87, 108, 0.15);
+            color: #f5576c;
+        }
+
+        .playlist-item .pl-actions .pl-delete:hover {
+            background: rgba(245, 87, 108, 0.25);
+        }
+
+        .playlist-empty {
+            color: #444;
+            font-size: 13px;
+            padding: 12px 0;
+        }
+
+        /* ========== 搜索结果 ========== */
+        .search-results {
+            margin-top: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .search-results::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .search-results::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .search-results::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: background 0.15s;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .result-item .info .name {
+            font-weight: 600;
+            color: #eee;
+            font-size: 14px;
+        }
+
+        .result-item .info .artist {
+            font-size: 13px;
+            color: #888;
+            margin-left: 8px;
+        }
+
+        .result-item .btn-add {
+            padding: 4px 16px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .result-item .btn-add:hover {
+            background: rgba(245, 87, 108, 0.35);
+            transform: scale(1.02);
+        }
+
+        .result-item .btn-add:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-empty {
+            text-align: center;
+            color: #555;
+            padding: 24px 0;
+            font-size: 14px;
+        }
+
+        /* ========== 右侧边栏 ========== */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ========== 队列列表 ========== */
+        .queue-list {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .queue-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .queue-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .queue-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: background 0.15s;
+            border-radius: 6px;
+        }
+
+        .queue-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .queue-item .pos {
+            color: #444;
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 20px;
+        }
+
+        .queue-item .q-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-item .q-info .q-name {
+            font-weight: 500;
+            color: #ddd;
+            font-size: 13px;
+        }
+
+        .queue-item .q-info .q-artist {
+            font-size: 11px;
+            color: #777;
+            margin-left: 6px;
+        }
+
+        .queue-item .q-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: 6px;
+        }
+
+        .queue-item .q-user {
+            font-size: 10px;
+            color: #f5576c;
+            background: rgba(245, 87, 108, 0.12);
+            padding: 1px 8px;
+            border-radius: 20px;
+        }
+
+        .queue-item .btn-top {
+            background: rgba(74, 222, 128, 0.15);
+            border: none;
+            color: #4ade80;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.15s;
+            opacity: 0.4;
+        }
+
+        .queue-item:hover .btn-top {
+            opacity: 1;
+        }
+
+        .queue-item .btn-top:hover {
+            background: rgba(74, 222, 128, 0.35);
+            transform: scale(1.1);
+        }
+
+        .queue-item .btn-top:active {
+            transform: scale(0.9);
+        }
+
+        .queue-item .btn-remove {
+            background: rgba(245, 87, 108, 0.15);
+            border: none;
+            color: #f5576c;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.15s;
+            opacity: 0.4;
+        }
+
+        .queue-item:hover .btn-remove {
+            opacity: 1;
+        }
+
+        .queue-item .btn-remove:hover {
+            background: rgba(245, 87, 108, 0.35);
+            transform: scale(1.1);
+        }
+
+        .queue-item .btn-remove:active {
+            transform: scale(0.9);
+        }
+
+        .queue-empty {
+            text-align: center;
+            color: #444;
+            padding: 16px 0;
+            font-size: 13px;
+        }
+
+        /* ========== 控制按钮 ========== */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .action-row button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+        }
+
+        .action-row button:hover {
+            transform: translateY(-1px);
+        }
+
+        .action-row .btn-danger {
+            background: rgba(245, 87, 108, 0.15);
+            color: #f5576c;
+        }
+
+        .action-row .btn-danger:hover {
+            background: rgba(245, 87, 108, 0.25);
+        }
+
+        .action-row .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #aaa;
+        }
+
+        .action-row .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        /* ========== 播放历史 ========== */
+        .history-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .history-tags .tag {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #888;
+            transition: background 0.15s;
+        }
+
+        .history-tags .tag:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .history-empty {
+            color: #444;
+            font-size: 13px;
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        /* ========== 聊天室 ========== */
+        .chat-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+            flex: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 160px;
+            padding-right: 4px;
+            margin-bottom: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .chat-messages .chat-empty {
+            text-align: center;
+            color: #444;
+            padding: 16px 0;
+            font-size: 13px;
+        }
+
+        .chat-msg {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            font-size: 12px;
+            transition: background 0.15s;
+        }
+
+        .chat-msg:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .chat-msg .msg-nickname {
+            color: #f5576c;
+            font-weight: 600;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .chat-msg .msg-time {
+            color: #555;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .chat-msg .msg-content {
+            color: #ddd;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 7px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8e8e8;
+            font-size: 12px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: #f5576c;
+        }
+
+        .chat-input-area input::placeholder {
+            color: #555;
+        }
+
+        .chat-input-area button {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .chat-input-area button:hover {
+            transform: translateY(-1px);
+            opacity: 0.90;
+        }
+
+        .chat-input-area button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ========== 滚动条美化 ========== */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.10);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .right-column {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            .chat-card {
+                min-height: 200px;
+            }
+            .chat-messages {
+                max-height: 120px;
+            }
+            .queue-list {
+                max-height: 120px;
+            }
+            .import-box {
+                flex-direction: column;
+            }
+            .import-box select,
+            .import-box input,
+            .import-box .btn-import {
+                width: 100%;
+            }
+            .playlist-item {
+                max-width: 100%;
+                flex: 1 1 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 14px 16px;
+            }
+            .app-header .logo h1 {
+                font-size: 20px;
+            }
+            .app-header .header-info {
+                font-size: 11px;
+                gap: 8px;
+            }
+            .online-dropdown {
+                left: 0;
+                transform: none;
+                min-width: 130px;
+            }
+            @keyframes fadeDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .right-column {
+                grid-template-columns: 1fr;
+            }
+            .now-playing {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .now-playing .cover-placeholder {
+                width: 56px;
+                height: 56px;
+                font-size: 24px;
+            }
+            .now-playing .song-meta .title {
+                font-size: 18px;
+            }
+            .search-box {
+                flex-direction: column;
+            }
+            .search-box button {
+                width: 100%;
+                justify-content: center;
+            }
+            .playback-controls .volume-group input[type="range"] {
+                width: 50px;
+            }
+            .card {
+                padding: 14px 16px;
+            }
+            .chat-card {
+                min-height: 180px;
+            }
+            .chat-messages {
+                max-height: 100px;
+            }
+            .queue-list {
+                max-height: 100px;
+            }
+            .queue-item {
+                flex-wrap: wrap;
+                gap: 3px;
+            }
+            .queue-item .q-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .lyrics-content.open {
+                max-height: 160px;
+            }
+            .lyrics-line {
+                font-size: 13px;
+                padding: 2px 4px;
+            }
+            .import-box {
+                flex-direction: column;
+            }
+            .import-box select,
+            .import-box input,
+            .import-box .btn-import {
+                width: 100%;
+            }
+            .playlist-item {
+                max-width: 100%;
+                flex: 1 1 100%;
+            }
+            .candidate-item {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .candidate-item .cand-artist {
+                margin-left: 0;
+                width: 100%;
+                padding-left: 38px;
+            }
+            .candidate-item .cand-add {
+                margin-left: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .playback-controls {
+                gap: 6px;
+            }
+            .playback-controls .ctrl-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 13px;
+            }
+            .playback-controls .btn-play {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+            .queue-item .q-user {
+                font-size: 9px;
+            }
+            .queue-item .q-actions {
+                gap: 3px;
+            }
+            .queue-item .btn-top,
+            .queue-item .btn-remove {
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+            }
+            .chat-msg {
+                font-size: 11px;
+                flex-wrap: wrap;
+            }
+            .chat-input-area input {
+                font-size: 11px;
+            }
+            .lyrics-content.open {
+                max-height: 120px;
+            }
+            .lyrics-line {
+                font-size: 12px;
+                line-height: 1.5;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- ===== 顶部导航 ===== -->
+        <header class="app-header">
+            <div class="logo">
+                <span>🎵</span>
+                <h1>共享点歌</h1>
+            </div>
+            <div class="header-info">
+                <span><span class="dot online"></span> 在线</span>
+                <span class="user-badge">👤 <span id="currentUserDisplay">加载中...</span></span>
+                <span class="online-users" id="onlineUsersTrigger" onclick="toggleOnlineDropdown()">
+                    👥 在线: <span id="onlineCountDisplay">0</span> 人
+                    <span style="font-size:9px;color:#666;margin-left:2px;">▼</span>
+                    <div class="online-dropdown" id="onlineDropdown">
+                        <div class="dropdown-title">🟢 当前在线</div>
+                        <div id="onlineUserList">
+                            <div class="empty-users">加载中...</div>
+                        </div>
+                    </div>
+                </span>
+                <span>🎤 点歌人数: <span id="userCount">0</span></span>
+                <span>📋 队列: <span id="queueCountHeader">0</span> 首</span>
+                <button class="logout-btn" onclick="logout()">退出</button>
+            </div>
+        </header>
+
+        <!-- ===== 主布局 ===== -->
+        <div class="main-grid">
+
+            <!-- ===== 左侧列 ===== -->
+            <div class="left-column">
+
+                <!-- 当前播放 -->
+                <div class="card now-playing-card">
+                    <div class="card-header">
+                        <h3>🎶 正在播放</h3>
+                        <span class="badge" id="statusBadge">● 停止</span>
+                    </div>
+
+                    <div class="now-playing" id="nowPlayingSection">
+                        <div class="cover-placeholder">🎵</div>
+                        <div class="song-meta">
+                            <div class="title" id="songTitle">暂无歌曲</div>
+                            <div class="artist" id="songArtist">等待点歌...</div>
+                            <div class="user-tag" id="songUserTag" style="display:none;">🎤 点歌人</div>
+                        </div>
+                    </div>
+
+                    <!-- 进度条 -->
+                    <div class="progress-section">
+                        <div class="progress-row">
+                            <span class="time-label" id="currentTimeLabel">0:00</span>
+                            <div class="progress-track" id="progressTrack" onclick="seekTo(event)">
+                                <div class="progress-fill" id="progressFill"></div>
+                                <div class="progress-tooltip" id="progressTooltip">0:00</div>
+                            </div>
+                            <span class="time-label" id="durationLabel">0:00</span>
+                        </div>
+                    </div>
+
+                    <!-- 控制栏 -->
+                    <div class="playback-controls">
+                        <button class="ctrl-btn" onclick="togglePlay()" id="playBtn" title="播放/暂停">⏸</button>
+                        <button class="ctrl-btn" onclick="nextSong()" title="下一首">⏭</button>
+
+                        <div class="status-badge">
+                            <span class="indicator stopped" id="statusIndicator"></span>
+                            <span id="statusText">停止</span>
+                        </div>
+
+                        <div class="volume-group">
+                            <span class="vol-icon" id="volumeIcon">🔊</span>
+                            <input type="range" min="0" max="100" value="80" id="volumeSlider" oninput="setVolume(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- ===== 歌词区域 ===== -->
+                    <div class="lyrics-container" id="lyricsContainer">
+                        <div class="lyrics-header">
+                            <span>📝 歌词</span>
+                            <button class="lyrics-toggle" onclick="toggleLyrics()" id="lyricsToggleBtn">展开</button>
+                        </div>
+                        <div class="lyrics-content" id="lyricsContent">
+                            <div class="lyrics-empty">🎵 点击"展开"加载歌词</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 搜索 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔍 搜索歌曲</h3>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="输入歌曲名称或歌手..." onkeydown="if(event.key==='Enter') searchSongs()">
+                        <button onclick="searchSongs()">搜索</button>
+                        <button onclick="addRandomPlaylist()" class="btn-random" id="randomBtn">🎲 随机歌单</button>
+                    </div>
+                    <div class="search-results" id="searchResults">
+                        <div class="search-empty">✨ 试试搜索你喜欢的歌</div>
+                    </div>
+                </div>
+
+<!-- ===== 歌单导入 ===== -->
+<div class="card">
+    <div class="card-header">
+        <h3>📥 导入歌单</h3>
+        <span class="badge" style="font-size:10px;">支持QQ音乐</span>
+    </div>
+    <div class="import-box">
+        <input type="text" id="playlistUrl" placeholder="粘贴QQ音乐歌单链接..." onkeydown="if(event.key==='Enter') importPlaylist()">
+        <button class="btn-import" onclick="importPlaylist()" id="importBtn">📥 解析歌单</button>
+    </div>
+    <div class="import-status" id="importStatus">💡 粘贴QQ音乐歌单链接，解析后点击歌曲添加</div>
+</div>
+
+                <!-- ===== 候选歌曲列表 ===== -->
+                <div class="card" id="candidateCard" style="display:none;">
+                    <div class="card-header">
+                        <h3>📋 候选歌曲 <span id="candidateCount" style="font-size:13px;color:#888;"></span></h3>
+                        <button class="btn-import" onclick="addAllCandidates()" id="addAllBtn" style="padding:6px 16px;font-size:12px;">✅ 全部添加</button>
+                    </div>
+                    <div class="candidate-list" id="candidateList">
+                        <div class="candidate-empty">暂无歌曲</div>
+                    </div>
+                </div>
+
+                <!-- ===== 我的歌单 ===== -->
+                <div class="card" id="myPlaylistsCard">
+                    <div class="card-header">
+                        <h3>📂 我的歌单</h3>
+                        <button class="btn-secondary" onclick="loadMyPlaylists()" style="padding:4px 12px;font-size:12px;">🔄 刷新</button>
+                    </div>
+                    <div class="my-playlists-list" id="myPlaylistsList">
+                        <div class="playlist-empty">暂无保存的歌单</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== 右侧列 ===== -->
+            <div class="right-column">
+
+                <!-- ===== 播放队列 ===== -->
+                <div class="card" style="flex-shrink: 0;">
+                    <div class="card-header">
+                        <h3>📋 播放队列</h3>
+                        <span class="badge" id="queueCount">0 首</span>
+                    </div>
+                    <div class="queue-list" id="queueList">
+                        <div class="queue-empty">队列为空，快来点歌吧</div>
+                    </div>
+                    <div class="action-row">
+                        <button class="btn-danger" onclick="removeAllSongs()">🗑 清空列表</button>
+                        <button class="btn-secondary" onclick="refreshStatus()">🔄 刷新</button>
+                    </div>
+                </div>
+
+                <!-- 播放历史 -->
+                <div class="card" style="flex-shrink: 0;">
+                    <div class="card-header">
+                        <h3>📜 最近播放</h3>
+                    </div>
+                    <div class="history-tags" id="historyList">
+                        <div class="history-empty">暂无播放记录</div>
+                    </div>
+                </div>
+
+                <!-- ===== 聊天室 ===== -->
+                <div class="card chat-card">
+                    <div class="card-header">
+                        <h3>💬 聊天室 <span style="font-size:11px;color:#666;font-weight:400;" id="chatOnlineCount">(0 人在线)</span></h3>
+                        <span class="badge" id="chatMsgCount">0 条</span>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-empty">💬 还没有消息，快来聊几句吧</div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="输入消息..." maxlength="200" onkeydown="if(event.key==='Enter') sendChatMessage()">
+                        <button onclick="sendChatMessage()">发送</button>
+                    </div>
+                </div>
+
+            </div>
+            <!-- /右侧列 -->
+
+        </div>
+        <!-- /主布局 -->
+
+    </div>
+    <!-- /容器 -->
+
+    <script>
+        // ============================================================
+        //  持久化用户管理
+        // ============================================================
+
+        function getCurrentUser() {
+            const params = new URLSearchParams(window.location.search);
+            let nickname = params.get('nickname');
+            if (!nickname) {
+                nickname = localStorage.getItem('userNickname');
+            }
+            if (!nickname) {
+                window.location.href = '/login';
+                return null;
+            }
+            localStorage.setItem('userNickname', nickname);
+            return nickname;
+        }
+
+        const CURRENT_USER = getCurrentUser();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (CURRENT_USER) {
+                document.getElementById('currentUserDisplay').textContent = CURRENT_USER;
+            }
+            loadMyPlaylists();
+        });
+
+        function logout() {
+            if (confirm('确定要退出吗？下次进入需要重新输入昵称。')) {
+                localStorage.removeItem('userNickname');
+                window.location.href = '/login';
+            }
+        }
+
+        // ============================================================
+        //  在线用户下拉列表
+        // ============================================================
+
+        let isDropdownOpen = false;
+
+        function toggleOnlineDropdown() {
+            isDropdownOpen = !isDropdownOpen;
+            const dropdown = document.getElementById('onlineDropdown');
+            if (isDropdownOpen) {
+                dropdown.classList.add('show');
+                fetchOnlineUsers();
+            } else {
+                dropdown.classList.remove('show');
+            }
+        }
+
+        function fetchOnlineUsers() {
+            const container = document.getElementById('onlineUserList');
+            container.innerHTML = '<div class="empty-users">⏳ 加载中...</div>';
+
+            fetch('/api/online_users')
+                .then(r => r.json())
+                .then(data => {
+                    const users = data.online_users || [];
+                    if (users.length === 0) {
+                        container.innerHTML = '<div class="empty-users">😴 暂无其他人在线</div>';
+                        return;
+                    }
+                    container.innerHTML = users.map(name => `
+                        <div class="user-item">
+                            <span class="online-dot"></span>
+                            <span class="user-name">${escapeHtml(name)}</span>
+                            ${name === CURRENT_USER ? '<span class="is-me">我</span>' : ''}
+                        </div>
+                    `).join('');
+                })
+                .catch(err => {
+                    container.innerHTML = '<div class="empty-users">❌ 加载失败</div>';
+                    console.error('获取在线用户失败:', err);
+                });
+        }
+
+        // 点击外部关闭下拉列表
+        document.addEventListener('click', function(event) {
+            const trigger = document.getElementById('onlineUsersTrigger');
+            if (trigger && !trigger.contains(event.target)) {
+                const dropdown = document.getElementById('onlineDropdown');
+                if (dropdown) dropdown.classList.remove('show');
+                isDropdownOpen = false;
+            }
+        });
+
+        // ============================================================
+        //  全局状态
+        // ============================================================
+        let currentDuration = 0;
+        let isSeeking = false;
+        let lastKeyword = '';
+        let heartbeatInterval = null;
+        let chatPollingInterval = null;
+        let lastMsgCount = 0;
+        let currentLyrics = [];
+        let lyricsInterval = null;
+        let lyricsOpen = false;
+        let currentCandidateSongs = [];
+        let currentPlaylistName = '';
+
+        // ============================================================
+        //  歌单导入功能
+        // ============================================================
+
+function importPlaylist() {
+    const url = document.getElementById('playlistUrl').value.trim();
+    const status = document.getElementById('importStatus');
+    const btn = document.getElementById('importBtn');
+
+    if (!url) {
+        status.textContent = '⚠️ 请输入歌单链接';
+        status.className = 'import-status error';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ 解析中...';
+    status.textContent = '⏳ 正在解析歌单，请稍候...';
+    status.className = 'import-status loading';
+
+    fetch('/api/import_playlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            url: url,
+            user: CURRENT_USER || '匿名'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            status.textContent = '❌ ' + data.error;
+            status.className = 'import-status error';
+            return;
+        }
+
+        if (data.songs && data.songs.length > 0) {
+            const playlistName = data.playlist_name || '未命名歌单';
+
+            return fetch('/api/playlists/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: CURRENT_USER || '匿名',
+                    playlist_name: playlistName,
+                    songs: data.songs
+                })
+            })
+            .then(r => r.json())
+            .then(saveResult => {
+                if (saveResult.exists) {
+                    const newName = playlistName + '_' + new Date().toLocaleDateString();
+                    return fetch('/api/playlists/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user: CURRENT_USER || '匿名',
+                            playlist_name: newName,
+                            songs: data.songs
+                        })
+                    });
+                }
+                return saveResult;
+            })
+            .then(finalResult => {
+                if (finalResult.success || finalResult.exists) {
+                    status.textContent = `✅ 解析成功！歌单 "${playlistName}" 已保存到"我的歌单"`;
+                    status.className = 'import-status success';
+                    document.getElementById('playlistUrl').value = '';
+                    loadMyPlaylists();
+                    loadPlaylistToCandidate(playlistName, data.songs);
+                } else {
+                    status.textContent = '❌ 保存歌单失败: ' + (finalResult.error || '未知错误');
+                    status.className = 'import-status error';
+                }
+            });
+        } else {
+            status.textContent = '❌ 歌单为空或解析失败';
+            status.className = 'import-status error';
+        }
+    })
+    .catch(err => {
+        status.textContent = '❌ 解析失败: ' + err.message;
+        status.className = 'import-status error';
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = '📥 解析歌单';
+    });
+}
+
+        function loadPlaylistToCandidate(name, songs) {
+            currentCandidateSongs = songs.map((song, idx) => ({
+                ...song,
+                index: idx + 1
+            }));
+            document.getElementById('candidateCard').style.display = 'block';
+            renderCandidateList(currentCandidateSongs);
+            document.getElementById('candidateCount').textContent = `共 ${currentCandidateSongs.length} 首`;
+        }
+
+        function renderCandidateList(songs) {
+            const container = document.getElementById('candidateList');
+            if (!songs || songs.length === 0) {
+                container.innerHTML = '<div class="candidate-empty">暂无歌曲</div>';
+                return;
+            }
+
+            container.innerHTML = songs.map((song, i) => `
+                <div class="candidate-item" onclick="addCandidateSong(${i})" title="点击添加到播放队列">
+                    <span class="cand-index">${i + 1}</span>
+                    <span class="cand-name">${escapeHtml(song.name)}</span>
+                    <span class="cand-artist">${escapeHtml(song.artist || '未知歌手')}</span>
+                    <span class="cand-add">▶ 添加</span>
+                </div>
+            `).join('');
+        }
+
+        function addCandidateSong(index) {
+            const song = currentCandidateSongs[index];
+            if (!song) return;
+
+            const items = document.querySelectorAll('.candidate-item');
+            if (items[index]) {
+                items[index].style.opacity = '0.5';
+                items[index].style.pointerEvents = 'none';
+            }
+
+            const user = CURRENT_USER || '匿名';
+
+            fetch('/api/get_song_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    keyword: `${song.artist} ${song.name}`,
+                    index: 1
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error || !data.play_url) {
+                    alert('❌ 未能获取播放地址: ' + (data.error || '未知错误'));
+                    if (items[index]) {
+                        items[index].style.opacity = '1';
+                        items[index].style.pointerEvents = 'auto';
+                    }
+                    return;
+                }
+
+                const songData = {
+                    name: data.name || song.name,
+                    artist: data.artist || song.artist,
+                    play_url: data.play_url,
+                    cover: data.cover || '',
+                    user: user
+                };
+
+                return fetch('/api/add_song', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(songData)
+                });
+            })
+            .then(r => {
+                if (r) return r.json();
+            })
+            .then(data => {
+                if (data && data.error) {
+                    alert('❌ ' + data.error);
+                } else if (data) {
+                    // 从候选列表中移除
+                    currentCandidateSongs.splice(index, 1);
+                    renderCandidateList(currentCandidateSongs);
+                    document.getElementById('candidateCount').textContent = `共 ${currentCandidateSongs.length} 首`;
+                    if (currentCandidateSongs.length === 0) {
+                        document.getElementById('candidateCard').style.display = 'none';
+                    }
+                    refreshStatus();
+                }
+                if (items[index]) {
+                    items[index].style.opacity = '1';
+                    items[index].style.pointerEvents = 'auto';
+                }
+            })
+            .catch(err => {
+                alert('❌ 添加失败: ' + err.message);
+                if (items[index]) {
+                    items[index].style.opacity = '1';
+                    items[index].style.pointerEvents = 'auto';
+                }
+            });
+        }
+
+        function addAllCandidates() {
+            if (currentCandidateSongs.length === 0) {
+                alert('没有歌曲可添加');
+                return;
+            }
+
+            if (!confirm(`确定要添加全部 ${currentCandidateSongs.length} 首歌曲到播放队列吗？`)) return;
+
+            const btn = document.getElementById('addAllBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 添加中...';
+
+            let added = 0;
+            const total = currentCandidateSongs.length;
+            const user = CURRENT_USER || '匿名';
+
+            // 复制一份，避免并发修改
+            const songsToAdd = [...currentCandidateSongs];
+
+            songsToAdd.forEach((song, index) => {
+                setTimeout(() => {
+                    fetch('/api/get_song_url', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            keyword: `${song.artist} ${song.name}`,
+                            index: 1
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.play_url) {
+                            return fetch('/api/add_song', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: data.name || song.name,
+                                    artist: data.artist || song.artist,
+                                    play_url: data.play_url,
+                                    cover: data.cover || '',
+                                    user: user
+                                })
+                            });
+                        }
+                        return null;
+                    })
+                    .then(() => {
+                        added++;
+                        btn.textContent = `⏳ ${added}/${total}`;
+                        if (added === total) {
+                            btn.textContent = '✅ 全部添加';
+                            btn.disabled = false;
+                            currentCandidateSongs = [];
+                            renderCandidateList([]);
+                            document.getElementById('candidateCard').style.display = 'none';
+                            alert(`✅ 已添加全部 ${total} 首歌曲到队列`);
+                            refreshStatus();
+                        }
+                    })
+                    .catch(() => {
+                        added++;
+                        if (added === total) {
+                            btn.textContent = '✅ 全部添加';
+                            btn.disabled = false;
+                            currentCandidateSongs = [];
+                            renderCandidateList([]);
+                            document.getElementById('candidateCard').style.display = 'none';
+                            refreshStatus();
+                        }
+                    });
+                }, index * 300);
+            });
+        }
+
+        // ============================================================
+        //  歌单存储功能
+        // ============================================================
+
+        function loadMyPlaylists() {
+            const container = document.getElementById('myPlaylistsList');
+
+            fetch('/api/playlists/list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: CURRENT_USER || '匿名'
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    container.innerHTML = '<div class="playlist-empty">❌ 加载失败</div>';
+                    return;
+                }
+
+                const playlists = data.playlists || {};
+                const names = Object.keys(playlists);
+
+                if (names.length === 0) {
+                    container.innerHTML = '<div class="playlist-empty">暂无保存的歌单</div>';
+                    return;
+                }
+
+                container.innerHTML = names.map(name => `
+                    <div class="playlist-item">
+                        <span class="pl-name">📁 ${escapeHtml(name)}</span>
+                        <span class="pl-meta">${playlists[name].count || 0} 首 · ${playlists[name].created_at || ''}</span>
+                        <div class="pl-actions">
+                            <button class="pl-load" onclick="loadPlaylist('${escapeHtml(name)}')">📥 加载</button>
+                            <button class="pl-delete" onclick="deletePlaylist('${escapeHtml(name)}')">🗑 删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(err => {
+                container.innerHTML = '<div class="playlist-empty">❌ 加载失败: ' + err.message + '</div>';
+            });
+        }
+
+        // 加载歌单到候选列表
+        function loadPlaylist(name) {
+            if (!confirm(`确定要加载歌单 "${name}" 到候选列表吗？`)) return;
+
+            fetch('/api/playlists/load', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: CURRENT_USER || '匿名',
+                    playlist_name: name
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    alert('❌ ' + data.error);
+                    return;
+                }
+
+                const playlist = data.playlist;
+                if (playlist && playlist.songs) {
+                    currentCandidateSongs = playlist.songs.map((song, idx) => ({
+                        ...song,
+                        index: idx + 1
+                    }));
+                    document.getElementById('candidateCard').style.display = 'block';
+                    renderCandidateList(currentCandidateSongs);
+                    document.getElementById('candidateCount').textContent = `共 ${currentCandidateSongs.length} 首`;
+                    alert(`✅ 已加载歌单 "${name}" 到候选列表，共 ${playlist.songs.length} 首歌曲`);
+                }
+            })
+            .catch(err => {
+                alert('❌ 加载失败: ' + err.message);
+            });
+        }
+
+        function deletePlaylist(name) {
+            if (!confirm(`确定要删除歌单 "${name}" 吗？`)) return;
+
+            fetch('/api/playlists/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: CURRENT_USER || '匿名',
+                    playlist_name: name
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    loadMyPlaylists();
+                } else {
+                    alert('❌ ' + (data.error || '删除失败'));
+                }
+            })
+            .catch(err => {
+                alert('❌ 删除失败: ' + err.message);
+            });
+        }
+
+        // ============================================================
+        //  搜索
+        // ============================================================
+        function searchSongs() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) { alert('请输入歌曲名称'); return; }
+
+            lastKeyword = keyword;
+            const container = document.getElementById('searchResults');
+            container.innerHTML = '<div class="search-empty" style="color:#666;">⏳ 搜索中...</div>';
+
+            fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        container.innerHTML = `<div class="search-empty" style="color:#f5576c;">❌ ${data.error}</div>`;
+                        return;
+                    }
+                    if (data.results && data.results.length > 0) {
+                        container.innerHTML = data.results.map(song => `
+                            <div class="result-item">
+                                <div class="info">
+                                    <span class="name">${escapeHtml(song.name)}</span>
+                                    <span class="artist">${escapeHtml(song.artist || '未知歌手')}</span>
+                                </div>
+                                <button class="btn-add" onclick="addSong('${encodeURIComponent(song.name)}', '${encodeURIComponent(song.artist)}', '${encodeURIComponent(song.cover || '')}', '${encodeURIComponent(keyword)}', ${song.index})">
+                                    ➕ 点歌
+                                </button>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<div class="search-empty">😕 未找到相关歌曲，试试其他关键词</div>';
+                    }
+                })
+                .catch(err => {
+                    container.innerHTML = `<div class="search-empty" style="color:#f5576c;">❌ 搜索失败: ${err.message}</div>`;
+                });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        //  添加歌曲（两步：先获取播放地址，再入队）
+        // ============================================================
+        function addSong(name, artist, cover, keyword, index) {
+            const user = CURRENT_USER || '匿名';
+
+            const btns = document.querySelectorAll('.result-item .btn-add');
+            btns.forEach(b => b.disabled = true);
+
+            fetch('/api/get_song_url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        keyword: decodeURIComponent(keyword),
+                        index: index
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('❌ ' + data.error);
+                        btns.forEach(b => b.disabled = false);
+                        return;
+                    }
+                    const songData = {
+                        name: data.name || decodeURIComponent(name),
+                        artist: data.artist || decodeURIComponent(artist),
+                        play_url: data.play_url,
+                        cover: data.cover || decodeURIComponent(cover),
+                        user: user
+                    };
+
+                    if (!songData.play_url) {
+                        alert('❌ 未能获取播放地址，请重试');
+                        btns.forEach(b => b.disabled = false);
+                        return;
+                    }
+
+                    return fetch('/api/add_song', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(songData)
+                    });
+                })
+                .then(r => {
+                    if (r) return r.json();
+                })
+                .then(data => {
+                    btns.forEach(b => b.disabled = false);
+                    if (data && data.error) {
+                        alert('❌ ' + data.error);
+                    } else if (data) {
+                        alert(`✅ ${data.message} (队列位置: ${data.position})`);
+                        document.getElementById('searchResults').innerHTML =
+                            '<div class="search-empty">✨ 试试搜索你喜欢的歌</div>';
+                        document.getElementById('searchInput').value = '';
+                        refreshStatus();
+                    }
+                })
+                .catch(err => {
+                    btns.forEach(b => b.disabled = false);
+                    alert('❌ 点歌失败: ' + err.message);
+                });
+        }
+
+        // ============================================================
+        //  随机歌单功能
+        // ============================================================
+
+        function addRandomPlaylist() {
+            const btn = document.getElementById('randomBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ 加载中...';
+
+            fetch('/api/random_playlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('❌ ' + data.error);
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    if (data.songs && data.songs.length > 0) {
+                        let added = 0;
+                        const total = data.songs.length;
+                        const user = CURRENT_USER || '匿名';
+
+                        btn.textContent = `🎲 添加中 0/${total}`;
+
+                        data.songs.forEach((song, index) => {
+                            setTimeout(() => {
+                                fetch('/api/get_song_url', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            keyword: song.keyword,
+                                            index: song.index
+                                        })
+                                    })
+                                    .then(r => r.json())
+                                    .then(urlData => {
+                                        if (urlData.play_url) {
+                                            const songData = {
+                                                name: urlData.name || song.name,
+                                                artist: urlData.artist || song.artist,
+                                                play_url: urlData.play_url,
+                                                cover: urlData.cover || song.cover,
+                                                user: user
+                                            };
+
+                                            return fetch('/api/add_song', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify(songData)
+                                            });
+                                        }
+                                        return null;
+                                    })
+                                    .then(() => {
+                                        added++;
+                                        btn.textContent = `🎲 添加中 ${added}/${total}`;
+
+                                        if (added === total) {
+                                            btn.textContent = '🎲 随机歌单';
+                                            btn.disabled = false;
+                                            alert(`✅ 已添加 ${total} 首歌曲到队列！`);
+                                            refreshStatus();
+                                        }
+                                    })
+                                    .catch(() => {
+                                        added++;
+                                        if (added === total) {
+                                            btn.textContent = '🎲 随机歌单';
+                                            btn.disabled = false;
+                                            refreshStatus();
+                                        }
+                                    });
+                            }, index * 400);
+                        });
+                    } else {
+                        alert('❌ 未能获取随机歌曲');
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    alert('❌ 获取随机歌单失败: ' + err.message);
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                });
+        }
+
+        // ============================================================
+        //  队列移除功能
+        // ============================================================
+
+        function removeSong(position) {
+            if (!confirm('确定要移除这首歌吗？')) return;
+
+            fetch('/api/remove_song', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ position: position })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ ' + data.message);
+                        refreshStatus();
+                    } else {
+                        alert('❌ ' + data.error);
+                    }
+                })
+                .catch(err => alert('❌ 移除失败: ' + err.message));
+        }
+
+        function removeAllSongs() {
+            const queueCount = document.getElementById('queueCount').textContent;
+            if (!queueCount || parseInt(queueCount) === 0) {
+                alert('队列已经是空的');
+                return;
+            }
+
+            if (!confirm(`确定要移除队列中所有 ${queueCount} 首歌曲吗？\n（当前正在播放的歌曲不受影响）`)) return;
+
+            fetch('/api/remove_all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ ${data.message}`);
+                        refreshStatus();
+                    }
+                })
+                .catch(err => alert('❌ 清空失败: ' + err.message));
+        }
+
+        // ============================================================
+        //  顶歌功能
+        // ============================================================
+
+        function moveToTop(position) {
+            if (position === 0) {
+                alert('这首歌已经在最前面了');
+                return;
+            }
+
+            fetch('/api/move_to_top', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ position: position })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        refreshStatus();
+                    } else {
+                        alert('❌ ' + data.error);
+                    }
+                })
+                .catch(err => alert('❌ 置顶失败: ' + err.message));
+        }
+
+        // ============================================================
+        //  歌词功能
+        // ============================================================
+
+        function toggleLyrics() {
+            lyricsOpen = !lyricsOpen;
+            const content = document.getElementById('lyricsContent');
+            const btn = document.getElementById('lyricsToggleBtn');
+
+            if (lyricsOpen) {
+                content.classList.add('open');
+                btn.textContent = '收起';
+                const currentSong = document.getElementById('songTitle').textContent;
+                if (currentSong && currentSong !== '暂无歌曲') {
+                    loadLyrics();
+                }
+            } else {
+                content.classList.remove('open');
+                btn.textContent = '展开';
+                if (lyricsInterval) {
+                    clearInterval(lyricsInterval);
+                    lyricsInterval = null;
+                }
+            }
+        }
+
+        function loadLyrics() {
+            const keyword = lastKeyword || document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                document.getElementById('lyricsContent').innerHTML = '<div class="lyrics-empty">请输入歌曲名搜索歌词</div>';
+                return;
+            }
+
+            document.getElementById('lyricsContent').innerHTML = '<div class="lyrics-empty">⏳ 加载歌词中...</div>';
+
+            fetch('/api/get_lyrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        keyword: keyword,
+                        index: 1
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.lyrics && data.lyrics.length > 0) {
+                        currentLyrics = data.lyrics;
+                        renderLyrics(currentLyrics);
+                        startLyricsSync();
+                    } else {
+                        document.getElementById('lyricsContent').innerHTML =
+                            '<div class="lyrics-empty">😕 未找到歌词</div>';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('lyricsContent').innerHTML =
+                        '<div class="lyrics-empty">❌ 加载失败: ' + err.message + '</div>';
+                });
+        }
+
+        function renderLyrics(lyrics) {
+            const container = document.getElementById('lyricsContent');
+            if (!lyrics || lyrics.length === 0) {
+                container.innerHTML = '<div class="lyrics-empty">暂无歌词</div>';
+                return;
+            }
+
+            container.innerHTML = lyrics.map(line => `
+                <div class="lyrics-line" data-time="${line.time}">
+                    <span class="lyrics-time">${line.time_str || ''}</span>
+                    ${escapeHtml(line.text)}
+                </div>
+            `).join('');
+        }
+
+        function startLyricsSync() {
+            if (lyricsInterval) {
+                clearInterval(lyricsInterval);
+            }
+            lyricsInterval = setInterval(syncLyrics, 500);
+        }
+
+        function syncLyrics() {
+            if (!lyricsOpen || currentLyrics.length === 0) return;
+
+            fetch('/api/progress')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.current_time === undefined || data.current_time === 0) return;
+
+                    const currentTime = data.current_time;
+                    let activeIndex = -1;
+
+                    for (let i = 0; i < currentLyrics.length; i++) {
+                        if (currentLyrics[i].time <= currentTime) {
+                            activeIndex = i;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    const lines = document.querySelectorAll('.lyrics-line');
+                    lines.forEach((line, index) => {
+                        if (index === activeIndex) {
+                            line.classList.add('active');
+                            line.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        } else {
+                            line.classList.remove('active');
+                        }
+                    });
+                })
+                .catch(err => console.error('歌词同步失败:', err));
+        }
+
+        // ============================================================
+        //  播放控制
+        // ============================================================
+        function togglePlay() {
+            fetch('/api/toggle_play', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    updatePlayButton(data.is_playing);
+                })
+                .catch(err => console.error('切换播放失败:', err));
+        }
+
+        function updatePlayButton(isPlaying) {
+            document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶️';
+        }
+
+        function nextSong() {
+            if (confirm('确定要跳过当前歌曲吗？')) {
+                fetch('/api/next', { method: 'POST' })
+                    .then(() => refreshStatus());
+            }
+        }
+
+        function clearQueue() {
+            if (confirm('确定要清空所有队列吗？')) {
+                fetch('/api/clear', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        alert('✅ ' + data.message);
+                        refreshStatus();
+                    });
+            }
+        }
+
+        // ============================================================
+        //  音量
+        // ============================================================
+        function setVolume(val) {
+            const icon = document.getElementById('volumeIcon');
+            const v = parseInt(val);
+            icon.textContent = v > 60 ? '🔊' : v > 20 ? '🔉' : '🔈';
+            fetch('/api/volume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ volume: v })
+            });
+        }
+
+        // ============================================================
+        //  进度条
+        // ============================================================
+        function formatTime(seconds) {
+            if (!seconds || seconds < 0) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress() {
+            if (isSeeking) return;
+
+            fetch('/api/progress')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.duration > 0) {
+                        currentDuration = data.duration;
+                        document.getElementById('durationLabel').textContent = formatTime(data.duration);
+                        const pct = Math.min((data.current_time / data.duration) * 100, 100);
+                        document.getElementById('progressFill').style.width = pct + '%';
+                        document.getElementById('currentTimeLabel').textContent = formatTime(data.current_time);
+                        updatePlayButton(data.is_playing);
+
+                        const statusText = document.getElementById('statusText');
+                        const indicator = document.getElementById('statusIndicator');
+                        const badge = document.getElementById('statusBadge');
+                        if (data.is_playing) {
+                            statusText.textContent = '播放中';
+                            indicator.className = 'indicator playing';
+                            badge.textContent = '● 播放中';
+                            badge.style.color = '#4ade80';
+                        } else if (data.current_song) {
+                            statusText.textContent = '已暂停';
+                            indicator.className = 'indicator paused';
+                            badge.textContent = '⏸ 已暂停';
+                            badge.style.color = '#fbbf24';
+                        } else {
+                            statusText.textContent = '停止';
+                            indicator.className = 'indicator stopped';
+                            badge.textContent = '● 停止';
+                            badge.style.color = '#888';
+                        }
+                    }
+                })
+                .catch(err => console.error('进度更新失败:', err));
+        }
+
+        function seekTo(event) {
+            const track = document.getElementById('progressTrack');
+            const rect = track.getBoundingClientRect();
+            let pct = (event.clientX - rect.left) / rect.width;
+            pct = Math.max(0, Math.min(1, pct));
+            const time = pct * currentDuration;
+
+            document.getElementById('progressFill').style.width = (pct * 100) + '%';
+            document.getElementById('currentTimeLabel').textContent = formatTime(time);
+
+            fetch('/api/seek', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ time: time })
+            });
+        }
+
+        // 进度条悬停提示
+        document.addEventListener('DOMContentLoaded', function() {
+            const track = document.getElementById('progressTrack');
+            const tooltip = document.getElementById('progressTooltip');
+            if (track) {
+                track.addEventListener('mousemove', function(e) {
+                    const rect = track.getBoundingClientRect();
+                    let pct = (e.clientX - rect.left) / rect.width;
+                    pct = Math.max(0, Math.min(1, pct));
+                    const time = pct * currentDuration;
+                    tooltip.textContent = formatTime(time);
+                    tooltip.style.left = Math.min(Math.max(pct * 100, 5), 95) + '%';
+                });
+            }
+        });
+
+        // ============================================================
+        //  刷新状态
+        // ============================================================
+        function refreshStatus() {
+            fetch('/api/queue')
+                .then(r => r.json())
+                .then(data => {
+                    updateCurrentSong(data.current);
+                    updateQueue(data.queue);
+                    updateHistory(data.history);
+                    document.getElementById('queueCountHeader').textContent = data.queue ? data.queue.length : 0;
+                    if (data.current && data.current.name) {
+                        updateProgress();
+                        if (lyricsOpen) {
+                            loadLyrics();
+                        }
+                    } else {
+                        document.getElementById('progressFill').style.width = '0%';
+                        document.getElementById('currentTimeLabel').textContent = '0:00';
+                        document.getElementById('durationLabel').textContent = '0:00';
+                        updatePlayButton(false);
+                        document.getElementById('statusText').textContent = '停止';
+                        document.getElementById('statusIndicator').className = 'indicator stopped';
+                        document.getElementById('statusBadge').textContent = '● 停止';
+                        document.getElementById('statusBadge').style.color = '#888';
+                    }
+                    if (data.history) {
+                        const users = new Set(data.history.map(s => s.user).filter(Boolean));
+                        document.getElementById('userCount').textContent = users.size;
+                    }
+                })
+                .catch(err => console.error('刷新失败:', err));
+        }
+
+        function updateCurrentSong(current) {
+            const titleEl = document.getElementById('songTitle');
+            const artistEl = document.getElementById('songArtist');
+            const userTag = document.getElementById('songUserTag');
+
+            if (current && current.name) {
+                titleEl.textContent = current.name;
+                artistEl.textContent = current.artist || '未知歌手';
+                userTag.style.display = 'inline-block';
+                userTag.textContent = '🎤 点歌人: ' + (current.user || '匿名');
+            } else {
+                titleEl.textContent = '暂无歌曲';
+                artistEl.textContent = '等待点歌...';
+                userTag.style.display = 'none';
+            }
+        }
+
+        function updateQueue(queue) {
+            const container = document.getElementById('queueList');
+            const count = document.getElementById('queueCount');
+            count.textContent = (queue ? queue.length : 0) + ' 首';
+
+            if (!queue || queue.length === 0) {
+                container.innerHTML = '<div class="queue-empty">队列为空，快来点歌吧</div>';
+                return;
+            }
+
+            container.innerHTML = queue.map((song, i) => `
+                <div class="queue-item">
+                    <div class="q-info">
+                        <span class="pos">${i + 1}</span>
+                        <span class="q-name">${escapeHtml(song.name)}</span>
+                        <span class="q-artist">${escapeHtml(song.artist || '未知')}</span>
+                    </div>
+                    <div class="q-actions">
+                        <span class="q-user">${escapeHtml(song.user || '匿名')}</span>
+                        ${i > 0 ? `<button class="btn-top" onclick="moveToTop(${i})" title="置顶（下一首播放）">⬆</button>` : ''}
+                        <button class="btn-remove" onclick="removeSong(${i})" title="移除这首歌">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateHistory(history) {
+            const container = document.getElementById('historyList');
+            if (!history || history.length === 0) {
+                container.innerHTML = '<div class="history-empty">暂无播放记录</div>';
+                return;
+            }
+            container.innerHTML = history.map(song =>
+                `<span class="tag">${escapeHtml(song.name)} · ${escapeHtml(song.artist || '未知')} (${escapeHtml(song.user || '匿名')})</span>`
+            ).join('');
+        }
+
+        // ============================================================
+        //  心跳 & 在线人数
+        // ============================================================
+        function sendHeartbeat() {
+            if (!CURRENT_USER) return;
+
+            fetch('/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nickname: CURRENT_USER })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('onlineCountDisplay').textContent = data.online_count;
+                        if (isDropdownOpen) {
+                            fetchOnlineUsers();
+                        }
+                    }
+                })
+                .catch(err => console.error('心跳失败:', err));
+        }
+
+        function startHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            sendHeartbeat();
+            heartbeatInterval = setInterval(sendHeartbeat, 10000);
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) sendHeartbeat();
+        });
+
+        // ============================================================
+        //  聊天室
+        // ============================================================
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const btn = document.querySelector('.chat-input-area button');
+            btn.disabled = true;
+
+            fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nickname: CURRENT_USER || '匿名',
+                        content: content
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        input.value = '';
+                        appendChatMessage(data.message);
+                        updateChatOnlineCount();
+                    } else {
+                        alert('❌ ' + data.error);
+                    }
+                })
+                .catch(err => alert('❌ 发送失败: ' + err.message))
+                .finally(() => {
+                    btn.disabled = false;
+                    input.focus();
+                });
+        }
+
+        function appendChatMessage(msg) {
+            const container = document.getElementById('chatMessages');
+            const empty = container.querySelector('.chat-empty');
+            if (empty) empty.remove();
+
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = `
+                <span class="msg-nickname">${escapeHtml(msg.nickname)}</span>
+                <span class="msg-time">${escapeHtml(msg.time)}</span>
+                <span class="msg-content">${escapeHtml(msg.content)}</span>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            document.getElementById('chatMsgCount').textContent = container.children.length + ' 条';
+        }
+
+        function loadChatMessages() {
+            fetch('/api/chat/messages?limit=50')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) return;
+                    const container = document.getElementById('chatMessages');
+                    container.innerHTML = '';
+                    if (data.messages.length === 0) {
+                        container.innerHTML = '<div class="chat-empty">💬 还没有消息，快来聊几句吧</div>';
+                        return;
+                    }
+                    data.messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = 'chat-msg';
+                        div.innerHTML = `
+                            <span class="msg-nickname">${escapeHtml(msg.nickname)}</span>
+                            <span class="msg-time">${escapeHtml(msg.time)}</span>
+                            <span class="msg-content">${escapeHtml(msg.content)}</span>
+                        `;
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                    document.getElementById('chatMsgCount').textContent = data.messages.length + ' 条';
+                    lastMsgCount = data.messages.length;
+                })
+                .catch(err => console.error('加载聊天记录失败:', err));
+        }
+
+        function pollNewMessages() {
+            fetch('/api/chat/messages?limit=50')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) return;
+                    const container = document.getElementById('chatMessages');
+                    const empty = container.querySelector('.chat-empty');
+                    if (empty) empty.remove();
+
+                    if (data.messages.length > lastMsgCount) {
+                        container.innerHTML = '';
+                        data.messages.forEach(msg => {
+                            const div = document.createElement('div');
+                            div.className = 'chat-msg';
+                            div.innerHTML = `
+                                <span class="msg-nickname">${escapeHtml(msg.nickname)}</span>
+                                <span class="msg-time">${escapeHtml(msg.time)}</span>
+                                <span class="msg-content">${escapeHtml(msg.content)}</span>
+                            `;
+                            container.appendChild(div);
+                        });
+                        container.scrollTop = container.scrollHeight;
+                        document.getElementById('chatMsgCount').textContent = data.messages.length + ' 条';
+                        lastMsgCount = data.messages.length;
+                    }
+                    updateChatOnlineCount();
+                })
+                .catch(err => console.error('轮询消息失败:', err));
+        }
+
+        function updateChatOnlineCount() {
+            fetch('/api/online_users')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.online_count !== undefined) {
+                        document.getElementById('chatOnlineCount').textContent = `(${data.online_count} 人在线)`;
+                    }
+                })
+                .catch(err => console.error('获取在线人数失败:', err));
+        }
+
+        function startChatRoom() {
+            loadChatMessages();
+            if (chatPollingInterval) clearInterval(chatPollingInterval);
+            chatPollingInterval = setInterval(pollNewMessages, 3000);
+            setInterval(updateChatOnlineCount, 10000);
+        }
+
+        // ============================================================
+        //  启动
+        // ============================================================
+        setInterval(refreshStatus, 3000);
+        setInterval(updateProgress, 1000);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+            startHeartbeat();
+            startChatRoom();
+        });
+    </script>
+
+</body>
+</html>
