@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 欢迎 - 共享点歌</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 50px 45px 40px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeUp 0.6s ease-out;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-container .icon {
+            font-size: 56px;
+            margin-bottom: 8px;
+        }
+
+        .login-container h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .login-container .subtitle {
+            color: #888;
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+
+        .login-container .subtitle span {
+            color: #f5576c;
+        }
+
+        .login-container .form-group {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        .login-container .form-group label {
+            display: block;
+            color: #ccc;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .login-container .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8e8e8;
+            font-size: 16px;
+            transition: border-color 0.25s, background 0.25s;
+            outline: none;
+        }
+
+        .login-container .form-group input:focus {
+            border-color: #f5576c;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .login-container .form-group input::placeholder {
+            color: #555;
+        }
+
+        .login-container .form-group .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .login-container .btn-enter {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            margin-top: 12px;
+        }
+
+        .login-container .btn-enter:hover {
+            transform: translateY(-2px);
+            opacity: 0.92;
+        }
+
+        .login-container .btn-enter:active {
+            transform: scale(0.97);
+        }
+
+        .login-container .btn-enter:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-container .footer-note {
+            margin-top: 20px;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .login-container .footer-note a {
+            color: #f5576c;
+            text-decoration: none;
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: rgba(245, 87, 108, 0.15);
+            color: #f5576c;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: none;
+            text-align: left;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 推荐昵称气泡 */
+        .name-suggestions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .name-suggestions .chip {
+            padding: 5px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .name-suggestions .chip:hover {
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+            border-color: rgba(245, 87, 108, 0.2);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 35px 24px 30px;
+            }
+            .login-container .icon {
+                font-size: 44px;
+            }
+            .login-container h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="icon">🎵</div>
+        <h1>共享点歌</h1>
+        <p class="subtitle">办公室 · <span>一起听歌</span></p>
+
+        <!-- 错误提示 -->
+        <div class="error-message" id="errorMessage">⚠️ 请输入你的昵称</div>
+
+        <div class="form-group">
+            <label for="nicknameInput">你的名字</label>
+            <input
+            type="text"
+            id="nicknameInput"
+            placeholder="输入昵称，如：张三"
+            maxlength="20"
+            autofocus
+            onkeydown="if(event.key==='Enter') enterChat()"
+            >
+            <div class="hint">💡 同事会看到你的点歌记录</div>
+        </div>
+
+        <!-- 快速选择昵称 -->
+        <div class="name-suggestions" id="suggestionContainer">
+            <span class="chip" onclick="setName('张三')">张三</span>
+            <span class="chip" onclick="setName('李四')">李四</span>
+            <span class="chip" onclick="setName('王五')">王五</span>
+            <span class="chip" onclick="setName('产品经理')">产品经理</span>
+            <span class="chip" onclick="setName('程序猿')">程序猿</span>
+        </div>
+
+        <button class="btn-enter" id="enterBtn" onclick="enterChat()">
+            🎧 进入点歌
+        </button>
+
+        <div class="footer-note">
+            💬 昵称仅用于显示点歌人
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  登录逻辑
+        // ============================================================
+
+        // 检查是否已有保存的昵称
+        const savedName = localStorage.getItem('userNickname');
+        if (savedName) {
+            document.getElementById('nicknameInput').value = savedName;
+        }
+
+        // 点击推荐昵称
+        function setName(name) {
+            document.getElementById('nicknameInput').value = name;
+            document.getElementById('nicknameInput').focus();
+            // 清除错误
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        // 进入主界面
+        function enterChat() {
+            const input = document.getElementById('nicknameInput');
+            const nickname = input.value.trim();
+            const errorEl = document.getElementById('errorMessage');
+
+            // 验证
+            if (!nickname) {
+                errorEl.textContent = '⚠️ 请输入你的昵称';
+                errorEl.classList.add('show');
+                input.focus();
+                return;
+            }
+
+            if (nickname.length < 1) {
+                errorEl.textContent = '⚠️ 昵称至少1个字符';
+                errorEl.classList.add('show');
+                input.focus();
+                return;
+            }
+
+            // 保存昵称到 localStorage
+            localStorage.setItem('userNickname', nickname);
+
+            // 跳转到主页面，通过 URL 参数传递昵称
+            window.location.href = `/?nickname=${encodeURIComponent(nickname)}`;
+        }
+
+        // 输入框实时清除错误状态
+        document.getElementById('nicknameInput').addEventListener('input', function() {
+            document.getElementById('errorMessage').classList.remove('show');
+        });
+
+        // 聚焦时选中全部文本
+        document.getElementById('nicknameInput').addEventListener('focus', function() {
+            this.select();
+        });
+    </script>
+
+</body>
+</html>
